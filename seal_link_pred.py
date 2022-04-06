@@ -100,7 +100,8 @@ class SEALDataset(InMemoryDataset):
             "rw_M": self.rw_kwargs.get('M'),
             "sparse_adj": self.sparse_adj,
             "edge_index": self.data.edge_index,
-            "device": device
+            "device": device,
+            "data": self.data
         }
 
         pos_list = extract_enclosing_subgraphs(
@@ -182,7 +183,8 @@ def train():
         x = data.x if args.use_feature else None
         edge_weight = data.edge_weight if args.use_edge_weight else None
         node_id = data.node_id if emb else None
-        logits = model(data.z, data.edge_index, data.batch, x, edge_weight, node_id)
+        num_nodes = data.num_nodes
+        logits = model(num_nodes, data.z, data.edge_index, data.batch, x, edge_weight, node_id)
         loss = BCEWithLogitsLoss()(logits.view(-1), data.y.to(torch.float))
         loss.backward()
         optimizer.step()
@@ -201,7 +203,8 @@ def test():
         x = data.x if args.use_feature else None
         edge_weight = data.edge_weight if args.use_edge_weight else None
         node_id = data.node_id if emb else None
-        logits = model(data.z, data.edge_index, data.batch, x, edge_weight, node_id)
+        num_nodes = data.num_nodes
+        logits = model(num_nodes, data.z, data.edge_index, data.batch, x, edge_weight, node_id)
         y_pred.append(logits.view(-1).cpu())
         y_true.append(data.y.view(-1).cpu().to(torch.float))
     val_pred, val_true = torch.cat(y_pred), torch.cat(y_true)
@@ -214,7 +217,8 @@ def test():
         x = data.x if args.use_feature else None
         edge_weight = data.edge_weight if args.use_edge_weight else None
         node_id = data.node_id if emb else None
-        logits = model(data.z, data.edge_index, data.batch, x, edge_weight, node_id)
+        num_nodes = data.num_nodes
+        logits = model(num_nodes, data.z, data.edge_index, data.batch, x, edge_weight, node_id)
         y_pred.append(logits.view(-1).cpu())
         y_true.append(data.y.view(-1).cpu().to(torch.float))
     test_pred, test_true = torch.cat(y_pred), torch.cat(y_true)
@@ -384,6 +388,8 @@ parser.add_argument('--use_heuristic', type=str, default=None,
                     help="test a link prediction heuristic (CN or AA)")
 parser.add_argument('--m', type=int, default=0, help="Set rw length")
 parser.add_argument('--M', type=int, default=0, help="Set number of rw")
+parser.add_argument('--dropedge', type=float, default=.0, help="Drop Edge Value for initial edge_index")
+parser.add_argument('--cuda_device', type=int, default=0, help="Only set available the passed GPU")
 args = parser.parse_args()
 
 if args.save_appendix == '':
@@ -458,6 +464,8 @@ elif args.eval_metric == 'auc':
     loggers = {
         'AUC': Logger(args.runs, args),
     }
+
+os.environ["CUDA_VISIBLE_DEVICES"] = str(args.cuda_device)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -610,13 +618,13 @@ for run in range(args.runs):
     if args.model == 'DGCNN':
         model = DGCNN(args.hidden_channels, args.num_layers, max_z, args.sortpool_k,
                       train_dataset, args.dynamic_train, use_feature=args.use_feature,
-                      node_embedding=emb).to(device)
+                      node_embedding=emb, dropedge=args.dropedge).to(device)
     elif args.model == 'SAGE':
         model = SAGE(args.hidden_channels, args.num_layers, max_z, train_dataset,
-                     args.use_feature, node_embedding=emb).to(device)
+                     args.use_feature, node_embedding=emb, dropedge=args.dropedge).to(device)
     elif args.model == 'GCN':
         model = GCN(args.hidden_channels, args.num_layers, max_z, train_dataset,
-                    args.use_feature, node_embedding=emb).to(device)
+                    args.use_feature, node_embedding=emb, dropedge=args.dropedge).to(device)
     elif args.model == 'GIN':
         model = GIN(args.hidden_channels, args.num_layers, max_z, train_dataset,
                     args.use_feature, node_embedding=emb).to(device)
