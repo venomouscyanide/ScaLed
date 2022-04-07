@@ -727,6 +727,7 @@ for run in range(args.runs):
 
     for key in loggers.keys():
         print(key)
+        loggers[key].add_info(args.epochs, args.runs)
         loggers[key].print_statistics(run)
         with open(log_file, 'a') as f:
             print(key, file=f)
@@ -734,6 +735,7 @@ for run in range(args.runs):
 
 for key in loggers.keys():
     print(key)
+    loggers[key].add_info(args.epochs, args.runs)
     loggers[key].print_statistics()
     with open(log_file, 'a') as f:
         print(key, file=f)
