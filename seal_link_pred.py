@@ -12,6 +12,7 @@ import os.path as osp
 from shutil import copy
 import copy as cp
 
+from torch.profiler import tensorboard_trace_handler
 from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 import pdb
@@ -885,6 +886,32 @@ def run_sweal(args, device):
 
         # Training starts
         for epoch in range(start_epoch, start_epoch + args.epochs):
+            with torch.profiler.profile(
+                    schedule=torch.profiler.schedule(
+                        wait=2,
+                        warmup=2,
+                        active=6,
+                        repeat=1),
+                    on_trace_ready=tensorboard_trace_handler('logs'),
+                    with_stack=True,
+                    with_flops=True,
+                    profile_memory=True,
+                    record_shapes=True
+            ) as profiler:
+                for step, data in enumerate(train_loader, 0):
+                    print("step:{}".format(step))
+                    data = data.to(device)
+                    optimizer.zero_grad()
+                    x = data.x if args.use_feature else None
+                    edge_weight = data.edge_weight if args.use_edge_weight else None
+                    node_id = data.node_id if emb else None
+                    num_nodes = data.num_nodes
+                    logits = model(num_nodes, data.z, data.edge_index, data.batch, x, edge_weight, node_id)
+                    loss = BCEWithLogitsLoss()(logits.view(-1), data.y.to(torch.float))
+                    loss.backward()
+                    optimizer.step()
+                    profiler.step()
+            exit(0)
             if not args.pairwise:
                 loss = train(model, train_loader, optimizer, device, emb, train_dataset, args)
             else:
