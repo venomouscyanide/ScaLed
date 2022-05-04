@@ -501,7 +501,7 @@ class SWEALArgumentParser:
         self.run_profiler = run_profiler
 
 
-def run_sweal(args, device):
+def run_sweal(args, device, profiler):
     if args.save_appendix == '':
         args.save_appendix = '_' + time.strftime("%Y%m%d%H%M%S")
         if args.m and args.M:
@@ -888,9 +888,10 @@ def run_sweal(args, device):
 
         # Training starts
         for epoch in range(start_epoch, start_epoch + args.epochs):
-            if args.run_profiler:
-                # running the profiler will exit the program
-                run_profiler(args, device, emb, model, optimizer, train_loader)
+            if profiler:
+                # Running the profiler will exit the program.
+                # Profiler is currently run for only 1 training epoch.
+                run_profiler(args, device, emb, model, optimizer, train_loader, profiler)
                 exit(0)
             if not args.pairwise:
                 loss = train(model, train_loader, optimizer, device, emb, train_dataset, args)
@@ -948,32 +949,20 @@ def run_sweal(args, device):
     print("fin.")
 
 
-def run_profiler(args, device, emb, model, optimizer, train_loader):
-    with torch.profiler.profile(
-            schedule=torch.profiler.schedule(
-                wait=5,
-                warmup=2,
-                active=5,
-                repeat=0),
-            on_trace_ready=tensorboard_trace_handler('logs'),
-            with_stack=True,
-            with_flops=True,
-            profile_memory=True,
-            record_shapes=True
-    ) as profiler:
-        for step, data in enumerate(train_loader):
-            print(f"profiler step:{step}")
-            data = data.to(device)
-            optimizer.zero_grad()
-            x = data.x if args.use_feature else None
-            edge_weight = data.edge_weight if args.use_edge_weight else None
-            node_id = data.node_id if emb else None
-            num_nodes = data.num_nodes
-            logits = model(num_nodes, data.z, data.edge_index, data.batch, x, edge_weight, node_id)
-            loss = BCEWithLogitsLoss()(logits.view(-1), data.y.to(torch.float))
-            loss.backward()
-            optimizer.step()
-            profiler.step()
+def run_profiler(args, device, emb, model, optimizer, train_loader, profiler):
+    for step, data in enumerate(train_loader):
+        print(f"profiler step:{step}")
+        data = data.to(device)
+        optimizer.zero_grad()
+        x = data.x if args.use_feature else None
+        edge_weight = data.edge_weight if args.use_edge_weight else None
+        node_id = data.node_id if emb else None
+        num_nodes = data.num_nodes
+        logits = model(num_nodes, data.z, data.edge_index, data.batch, x, edge_weight, node_id)
+        loss = BCEWithLogitsLoss()(logits.view(-1), data.y.to(torch.float))
+        loss.backward()
+        optimizer.step()
+        profiler.step()
 
 
 if __name__ == '__main__':
@@ -1064,4 +1053,19 @@ if __name__ == '__main__':
         # Planetoid does not work on GPU in dynamic mode
         torch.multiprocessing.set_start_method('fork', force=True)
         device = 'cpu'
-    run_sweal(args, device)
+    if args.run_profile:
+        with torch.profiler.profile(
+                schedule=torch.profiler.schedule(
+                    wait=5,
+                    warmup=5,
+                    active=5,
+                    repeat=0),
+                on_trace_ready=tensorboard_trace_handler('logs'),
+                with_stack=True,
+                with_flops=True,
+                profile_memory=True,
+                record_shapes=True
+        ) as profiler:
+            run_sweal(args, device, profiler)
+    else:
+        run_sweal(args, device, profiler=None)

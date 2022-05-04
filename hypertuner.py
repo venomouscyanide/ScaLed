@@ -38,7 +38,7 @@ class ManualTuner:
                                            delete_dataset=delete_dataset, pairwise=False, loss_fn='', neg_ratio=1,
                                            run_profiler=False)
 
-        run_sweal(sweal_parser, device)
+        run_sweal(sweal_parser, device, profiler=None)
 
 
 if __name__ == '__main__':
