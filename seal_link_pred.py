@@ -1056,15 +1056,16 @@ if __name__ == '__main__':
     if args.run_profiler:
         with torch.profiler.profile(
                 schedule=torch.profiler.schedule(
-                    wait=0,
-                    warmup=0,
+                    wait=5,
+                    warmup=5,
                     active=5,
                     repeat=0),
                 on_trace_ready=tensorboard_trace_handler('logs'),
                 with_stack=True,
                 with_flops=True,
                 profile_memory=True,
-                record_shapes=True
+                record_shapes=True,
+                with_modules=True
         ) as profiler:
             run_sweal(args, device, profiler)
     else:
