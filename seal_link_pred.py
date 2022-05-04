@@ -441,7 +441,8 @@ class SWEALArgumentParser:
                  train_percent, val_percent, test_percent, dynamic_train, dynamic_val, dynamic_test, num_workers,
                  train_node_embedding, pretrained_node_embedding, use_valedges_as_input, eval_steps, log_steps,
                  data_appendix, save_appendix, keep_old, continue_from, only_test, test_multiple_models, use_heuristic,
-                 m, M, dropedge, calc_ratio, checkpoint_training, delete_dataset, pairwise, loss_fn, neg_ratio):
+                 m, M, dropedge, calc_ratio, checkpoint_training, delete_dataset, pairwise, loss_fn, neg_ratio,
+                 run_profiler):
         # Data Settings
         self.dataset = dataset
         self.fast_split = fast_split
@@ -497,6 +498,7 @@ class SWEALArgumentParser:
         self.pairwise = pairwise
         self.loss_fn = loss_fn
         self.neg_ratio = neg_ratio
+        self.run_profiler = run_profiler
 
 
 def run_sweal(args, device):
@@ -886,32 +888,10 @@ def run_sweal(args, device):
 
         # Training starts
         for epoch in range(start_epoch, start_epoch + args.epochs):
-            with torch.profiler.profile(
-                    schedule=torch.profiler.schedule(
-                        wait=2,
-                        warmup=2,
-                        active=6,
-                        repeat=1),
-                    on_trace_ready=tensorboard_trace_handler('logs'),
-                    with_stack=True,
-                    with_flops=True,
-                    profile_memory=True,
-                    record_shapes=True
-            ) as profiler:
-                for step, data in enumerate(train_loader, 0):
-                    print("step:{}".format(step))
-                    data = data.to(device)
-                    optimizer.zero_grad()
-                    x = data.x if args.use_feature else None
-                    edge_weight = data.edge_weight if args.use_edge_weight else None
-                    node_id = data.node_id if emb else None
-                    num_nodes = data.num_nodes
-                    logits = model(num_nodes, data.z, data.edge_index, data.batch, x, edge_weight, node_id)
-                    loss = BCEWithLogitsLoss()(logits.view(-1), data.y.to(torch.float))
-                    loss.backward()
-                    optimizer.step()
-                    profiler.step()
-            exit(0)
+            if args.run_profiler:
+                # running the profiler will exit the program
+                run_profiler(args, device, emb, model, optimizer, train_loader)
+                exit(0)
             if not args.pairwise:
                 loss = train(model, train_loader, optimizer, device, emb, train_dataset, args)
             else:
@@ -966,6 +946,34 @@ def run_sweal(args, device):
             shutil.rmtree(path)
 
     print("fin.")
+
+
+def run_profiler(args, device, emb, model, optimizer, train_loader):
+    with torch.profiler.profile(
+            schedule=torch.profiler.schedule(
+                wait=2,
+                warmup=2,
+                active=5,
+                repeat=0),
+            on_trace_ready=tensorboard_trace_handler('logs'),
+            with_stack=True,
+            with_flops=True,
+            profile_memory=True,
+            record_shapes=True
+    ) as profiler:
+        for step, data in enumerate(train_loader, 0):
+            print("step:{}".format(step))
+            data = data.to(device)
+            optimizer.zero_grad()
+            x = data.x if args.use_feature else None
+            edge_weight = data.edge_weight if args.use_edge_weight else None
+            node_id = data.node_id if emb else None
+            num_nodes = data.num_nodes
+            logits = model(num_nodes, data.z, data.edge_index, data.batch, x, edge_weight, node_id)
+            loss = BCEWithLogitsLoss()(logits.view(-1), data.y.to(torch.float))
+            loss.backward()
+            optimizer.step()
+            profiler.step()
 
 
 if __name__ == '__main__':
@@ -1042,6 +1050,7 @@ if __name__ == '__main__':
     parser.add_argument('--neg_ratio', type=int, default=1,
                         help="Compile neg_ratio times the positive samples for compiling neg_samples"
                              "(only for Training data)")
+    parser.add_argument('--run_profiler', action='store_true', help="Run only the profiler")
     args = parser.parse_args()
 
     device = torch.device(f'cuda:{args.cuda_device}' if torch.cuda.is_available() else 'cpu')
