@@ -1053,7 +1053,7 @@ if __name__ == '__main__':
         # Planetoid does not work on GPU in dynamic mode
         torch.multiprocessing.set_start_method('fork', force=True)
         device = 'cpu'
-    if args.run_profile:
+    if args.run_profiler:
         with torch.profiler.profile(
                 schedule=torch.profiler.schedule(
                     wait=5,
