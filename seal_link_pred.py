@@ -951,7 +951,7 @@ def run_sweal(args, device):
 def run_profiler(args, device, emb, model, optimizer, train_loader):
     with torch.profiler.profile(
             schedule=torch.profiler.schedule(
-                wait=2,
+                wait=5,
                 warmup=2,
                 active=5,
                 repeat=0),
@@ -961,8 +961,8 @@ def run_profiler(args, device, emb, model, optimizer, train_loader):
             profile_memory=True,
             record_shapes=True
     ) as profiler:
-        for step, data in enumerate(train_loader, 0):
-            print("step:{}".format(step))
+        for step, data in enumerate(train_loader):
+            print(f"profiler step:{step}")
             data = data.to(device)
             optimizer.zero_grad()
             x = data.x if args.use_feature else None
