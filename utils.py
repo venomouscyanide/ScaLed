@@ -36,7 +36,7 @@ def neighbors(fringe, A, outgoing=True):
     return res
 
 
-def k_hop_subgraph(src, dst, num_hops, A, sample_ratio=1.0,
+def k_hop_subgraph(graph, src, dst, num_hops, A, sample_ratio=1.0,
                    max_nodes_per_hop=None, node_features=None,
                    y=1, directed=False, A_csc=None, rw_kwargs=None):
     # Extract the k-hop enclosing subgraph around link (src, dst) from A.
@@ -81,10 +81,15 @@ def k_hop_subgraph(src, dst, num_hops, A, sample_ratio=1.0,
         edge_index = rw_kwargs['edge_index']
         device = rw_kwargs['device']
         data_org = rw_kwargs['data']
+        degree_adaptive = rw_kwargs['degree_adaptive']
 
         starting_nodes = []
+        if degree_adaptive:
+            [starting_nodes.extend([src]) for _ in range(max(1, min(5 * graph.degree[src], rw_M)))]
+            [starting_nodes.extend([dst]) for _ in range(max(1, min(5 * graph.degree[dst], rw_M)))]
+        else:
+            [starting_nodes.extend([src, dst]) for _ in range(rw_M)]
 
-        [starting_nodes.extend([src, dst]) for _ in range(rw_M)]
         start = torch.tensor(starting_nodes, dtype=torch.long, device=device)
 
         rw = sparse_adj.random_walk(start.flatten(), rw_m)
@@ -261,16 +266,16 @@ def construct_pyg_graph(node_ids, adj, dists, node_features, y, node_label='drnl
     return data
 
 
-def calc_node_edge_ratio(src, dst, num_hops, A, ratio_per_hop,
+def calc_node_edge_ratio(graph, src, dst, num_hops, A, ratio_per_hop,
                          max_nodes_per_hop, x, y, directed, A_csc, node_label, rw_kwargs, verbose=False):
     # calculate the % of nodes/edges in original k-hop vs rw induced graph
-    tmp = k_hop_subgraph(src, dst, num_hops, A, ratio_per_hop,
+    tmp = k_hop_subgraph(graph, src, dst, num_hops, A, ratio_per_hop,
                          max_nodes_per_hop, node_features=x, y=y,
                          directed=directed, A_csc=A_csc)
 
     data_k_hop = construct_pyg_graph(*tmp, node_label)
 
-    data_rw = k_hop_subgraph(src, dst, num_hops, A, ratio_per_hop,
+    data_rw = k_hop_subgraph(graph, src, dst, num_hops, A, ratio_per_hop,
                              max_nodes_per_hop, node_features=x, y=y,
                              directed=directed, A_csc=A_csc, rw_kwargs=rw_kwargs)
     node_ratio = data_k_hop.num_nodes / data_rw.num_nodes,
@@ -285,7 +290,7 @@ def calc_node_edge_ratio(src, dst, num_hops, A, ratio_per_hop,
     return node_ratio, edge_ratio
 
 
-def extract_enclosing_subgraphs(link_index, A, x, y, num_hops, node_label='drnl',
+def extract_enclosing_subgraphs(graph, link_index, A, x, y, num_hops, node_label='drnl',
                                 ratio_per_hop=1.0, max_nodes_per_hop=None,
                                 directed=False, A_csc=None, rw_kwargs=None):
     # Extract enclosing subgraphs from A for all links in link_index.
@@ -296,19 +301,19 @@ def extract_enclosing_subgraphs(link_index, A, x, y, num_hops, node_label='drnl'
 
     for src, dst in tqdm(link_index.t().tolist()):
         if rw_kwargs['calc_ratio']:
-            node_ratio, edge_ratio = calc_node_edge_ratio(src, dst, num_hops, A, ratio_per_hop, max_nodes_per_hop, x, y,
+            node_ratio, edge_ratio = calc_node_edge_ratio(graph, src, dst, num_hops, A, ratio_per_hop, max_nodes_per_hop, x, y,
                                                           directed, A_csc, node_label, rw_kwargs)
             overall_node_ratio_sum = np.append(overall_node_ratio_sum, node_ratio)
             overall_edge_ratio_sum = np.append(overall_edge_ratio_sum, edge_ratio)
 
         if not rw_kwargs['rw_m']:
-            tmp = k_hop_subgraph(src, dst, num_hops, A, ratio_per_hop,
+            tmp = k_hop_subgraph(graph, src, dst, num_hops, A, ratio_per_hop,
                                  max_nodes_per_hop, node_features=x, y=y,
                                  directed=directed, A_csc=A_csc)
 
             data = construct_pyg_graph(*tmp, node_label)
         else:
-            data = k_hop_subgraph(src, dst, num_hops, A, ratio_per_hop,
+            data = k_hop_subgraph(graph, src, dst, num_hops, A, ratio_per_hop,
                                   max_nodes_per_hop, node_features=x, y=y,
                                   directed=directed, A_csc=A_csc, rw_kwargs=rw_kwargs)
         draw = False

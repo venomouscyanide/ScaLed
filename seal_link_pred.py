@@ -40,11 +40,12 @@ warnings.simplefilter('ignore', SparseEfficiencyWarning)
 
 
 class SEALDataset(InMemoryDataset):
-    def __init__(self, root, data, split_edge, num_hops, percent=100, split='train',
+    def __init__(self, root, data, graph, split_edge, num_hops, percent=100, split='train',
                  use_coalesce=False, node_label='drnl', ratio_per_hop=1.0,
                  max_nodes_per_hop=None, directed=False, rw_kwargs=None, device='cpu', pairwise=False,
-                 pos_pairwise=False, neg_ratio=1):
+                 pos_pairwise=False, neg_ratio=1, degree_adaptive=False):
         self.data = data
+        self.graph = graph
         self.split_edge = split_edge
         self.num_hops = num_hops
         self.percent = int(percent) if percent >= 1.0 else percent
@@ -62,6 +63,7 @@ class SEALDataset(InMemoryDataset):
             value=torch.arange(self.E, device=self.device),
             sparse_sizes=(self.N, self.N))
         self.rw_kwargs = rw_kwargs
+        self.degree_adaptive = degree_adaptive
         self.pairwise = pairwise
         self.pos_pairwise = pos_pairwise
         self.neg_ratio = neg_ratio
@@ -111,27 +113,28 @@ class SEALDataset(InMemoryDataset):
             "edge_index": self.data.edge_index,
             "device": self.device,
             "data": self.data,
-            "calc_ratio": self.rw_kwargs.get('calc_ratio', False)
+            "calc_ratio": self.rw_kwargs.get('calc_ratio', False),
+            "degree_adaptive": self.degree_adaptive
         }
 
         if not self.pairwise:
-            pos_list = extract_enclosing_subgraphs(
+            pos_list = extract_enclosing_subgraphs(self.graph,
                 pos_edge, A, self.data.x, 1, self.num_hops, self.node_label,
                 self.ratio_per_hop, self.max_nodes_per_hop, self.directed, A_csc, rw_kwargs)
-            neg_list = extract_enclosing_subgraphs(
+            neg_list = extract_enclosing_subgraphs(self.graph,
                 neg_edge, A, self.data.x, 0, self.num_hops, self.node_label,
                 self.ratio_per_hop, self.max_nodes_per_hop, self.directed, A_csc, rw_kwargs)
             torch.save(self.collate(pos_list + neg_list), self.processed_paths[0])
             del pos_list, neg_list
         else:
             if self.pos_pairwise:
-                pos_list = extract_enclosing_subgraphs(
+                pos_list = extract_enclosing_subgraphs(self.graph,
                     pos_edge, A, self.data.x, 1, self.num_hops, self.node_label,
                     self.ratio_per_hop, self.max_nodes_per_hop, self.directed, A_csc, rw_kwargs)
                 torch.save(self.collate(pos_list), self.processed_paths[0])
                 del pos_list
             else:
-                neg_list = extract_enclosing_subgraphs(
+                neg_list = extract_enclosing_subgraphs(self.graph,
                     neg_edge, A, self.data.x, 0, self.num_hops, self.node_label,
                     self.ratio_per_hop, self.max_nodes_per_hop, self.directed, A_csc, rw_kwargs)
                 torch.save(self.collate(neg_list), self.processed_paths[0])
@@ -139,11 +142,12 @@ class SEALDataset(InMemoryDataset):
 
 
 class SEALDynamicDataset(Dataset):
-    def __init__(self, root, data, split_edge, num_hops, percent=100, split='train',
+    def __init__(self, root, data, graph, split_edge, num_hops, percent=100, split='train',
                  use_coalesce=False, node_label='drnl', ratio_per_hop=1.0,
                  max_nodes_per_hop=None, directed=False, rw_kwargs=None, device='cpu', pairwise=False,
-                 pos_pairwise=False, neg_ratio=1, **kwargs):
+                 pos_pairwise=False, neg_ratio=1, degree_adaptive=False, **kwargs):
         self.data = data
+        self.graph = graph
         self.split_edge = split_edge
         self.num_hops = num_hops
         self.percent = percent
@@ -153,6 +157,7 @@ class SEALDynamicDataset(Dataset):
         self.max_nodes_per_hop = max_nodes_per_hop
         self.directed = directed
         self.rw_kwargs = rw_kwargs
+        self.degree_adaptive = degree_adaptive
         self.device = device
         self.N = self.data.num_nodes
         self.E = self.data.edge_index.size()[-1]
@@ -169,6 +174,7 @@ class SEALDynamicDataset(Dataset):
                                                self.data.edge_index,
                                                self.data.num_nodes,
                                                self.percent, neg_ratio=self.neg_ratio)
+
         if self.pairwise:
             if self.pos_pairwise:
                 self.links = pos_edge.t().tolist()
@@ -214,16 +220,17 @@ class SEALDynamicDataset(Dataset):
             "sparse_adj": self.sparse_adj,
             "edge_index": self.data.edge_index,
             "device": self.device,
-            "data": self.data
+            "data": self.data,
+            "degree_adaptive": self.degree_adaptive
         }
 
         if not rw_kwargs['rw_m']:
-            tmp = k_hop_subgraph(src, dst, self.num_hops, self.A, self.ratio_per_hop,
+            tmp = k_hop_subgraph(self.graph, src, dst, self.num_hops, self.A, self.ratio_per_hop,
                                  self.max_nodes_per_hop, node_features=self.data.x,
                                  y=y, directed=self.directed, A_csc=self.A_csc)
             data = construct_pyg_graph(*tmp, self.node_label)
         else:
-            data = k_hop_subgraph(src, dst, self.num_hops, self.A, self.ratio_per_hop,
+            data = k_hop_subgraph(self.graph, src, dst, self.num_hops, self.A, self.ratio_per_hop,
                                   self.max_nodes_per_hop, node_features=self.data.x,
                                   y=y, directed=self.directed, A_csc=self.A_csc, rw_kwargs=rw_kwargs)
 
@@ -549,6 +556,8 @@ def run_sweal(args, device):
         split_edge = do_edge_split(dataset, args.fast_split, neg_ratio=args.neg_ratio)
         data = dataset[0]
         data.edge_index = split_edge['train']['edge'].t()
+    from torch_geometric.utils import to_networkx
+    graph = to_networkx(data)
 
     if args.dataset_stats:
         print(f'Dataset: {dataset}:')
@@ -663,6 +672,7 @@ def run_sweal(args, device):
         train_dataset = eval(dataset_class)(
             path,
             data,
+            graph,
             split_edge,
             num_hops=args.num_hops,
             percent=args.train_percent,
@@ -675,12 +685,14 @@ def run_sweal(args, device):
             rw_kwargs=rw_kwargs,
             device=device,
             neg_ratio=args.neg_ratio,
+            degree_adaptive=args.degree_adaptive
         )
     else:
         pos_path = f'{path}_pos_edges'
         train_positive_dataset = eval(dataset_class)(
             pos_path,
             data,
+            graph,
             split_edge,
             num_hops=args.num_hops,
             percent=args.train_percent,
@@ -695,11 +707,13 @@ def run_sweal(args, device):
             pairwise=args.pairwise,
             pos_pairwise=True,
             neg_ratio=args.neg_ratio,
+            degree_adaptive=args.degree_adaptive
         )
         neg_path = f'{path}_neg_edges'
         train_negative_dataset = eval(dataset_class)(
             neg_path,
             data,
+            graph,
             split_edge,
             num_hops=args.num_hops,
             percent=args.train_percent,
@@ -714,6 +728,7 @@ def run_sweal(args, device):
             pairwise=args.pairwise,
             pos_pairwise=False,
             neg_ratio=args.neg_ratio,
+            degree_adaptive=args.degree_adaptive
         )
     viz = False
     if viz:  # visualize some graphs
@@ -743,6 +758,7 @@ def run_sweal(args, device):
     val_dataset = eval(dataset_class)(
         path,
         data,
+        graph,
         split_edge,
         num_hops=args.num_hops,
         percent=args.val_percent,
@@ -760,6 +776,7 @@ def run_sweal(args, device):
     test_dataset = eval(dataset_class)(
         path,
         data,
+        graph,
         split_edge,
         num_hops=args.num_hops,
         percent=args.test_percent,
@@ -954,6 +971,8 @@ if __name__ == '__main__':
     parser.add_argument('--hidden_channels', type=int, default=32)
     parser.add_argument('--batch_size', type=int, default=32)
     # Subgraph extraction settings
+    parser.add_argument('--degree_adaptive', action='store_true',
+                        help="perform number of random walks based on degree")
     parser.add_argument('--num_hops', type=int, default=1)
     parser.add_argument('--ratio_per_hop', type=float, default=1.0)
     parser.add_argument('--max_nodes_per_hop', type=int, default=None)
