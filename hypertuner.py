@@ -16,7 +16,7 @@ from torch_geometric import seed_everything
 
 class HyperTuningSearchSpace:
     m = [2, 3, 5, 7]  # the length of rw sequences
-    M = [2, 5, 10, 20]  # the number of rw sequences
+    M = [40]  # the number of rw sequences
     dropedge = [0.00]
 
 
