@@ -45,11 +45,11 @@ if __name__ == '__main__':
     # multi-line graph plots for hyperparameter tuning results
     slice_length = len(HyperTunerResults.m)
     # colors = ['b', 'g', 'r', 'm', 'c', 'y', 'k', 'w']
-    cmap = [plt.cm.get_cmap("OrRd"), plt.cm.get_cmap("BuGn")]
-    slicedCM = [cmap[0](np.linspace(0.5, 1, slice_length)), cmap[1](np.linspace(0.5, 1, slice_length))]
+    cmap = [plt.cm.get_cmap("Greens"), plt.cm.get_cmap("Reds")]
+    slicedCM = [cmap[0](np.linspace(0.5, 0.8, slice_length)), cmap[1](np.linspace(0.5, 0.8, slice_length))]
     line_style = ['solid', 'dotted', 'dashed', 'dashdot']
     marker_style = ['D', 's', 'o', '^']
-    seal_colors = ['b', 'm']
+    seal_colors = ['darkgreen', 'firebrick']
 
     for dataset, results in HyperTunerResults.RESULTS_NON.items():
         all_auc = results['AUC_MEAN']
@@ -72,18 +72,18 @@ if __name__ == '__main__':
     for index, (dataset, results) in enumerate(HyperTunerResults.RESULTS_NON.items()):
         # SEAL line
         auc_SEAL_results = HyperTunerResults.SEAL[dataset]['AUC_MEAN'] * 4
-        plt.plot(default_x_ticks, auc_SEAL_results, label=f"{dataset} SEAL", color=seal_colors[index], linestyle='-')
+        plt.plot(default_x_ticks, auc_SEAL_results, label=f"SEAL {dataset}", color=seal_colors[index], linestyle='-')
 
         auc_m_results = results['auc_m_results']
         for inner_index, m_values in enumerate(auc_m_results):
-            plt.plot(default_x_ticks, m_values, label=f"{dataset} h={HyperTunerResults.m[inner_index]}",
+            plt.plot(default_x_ticks, m_values, label=f"ScaLed {dataset} h={HyperTunerResults.m[inner_index]}",
                      color=slicedCM[index][inner_index],
                      linestyle=line_style[inner_index], marker=marker_style[inner_index])
 
-    plt.ylabel('AUC Scores on testing split')
-    plt.xlabel('k: Number of walks')
-    plt.legend(loc="lower right")
-    plt.title(f"Non Attributed Datasets AUC vs. (h, k)")
+    plt.ylabel('AUC Scores on Testing Data')
+    plt.xlabel('k: Number of Walks')
+    plt.legend(loc="lower right", fontsize='small', ncol=2)
+    plt.title(f"Non-Attributed Datasets AUC vs. (h, k)")
     plt.show()
     f.savefig("hypertuner_non_attr_auc.pdf", bbox_inches='tight')
 
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     for index, (dataset, results) in enumerate(HyperTunerResults.RESULTS_NON.items()):
         # SEAL line
         auc_SEAL_results = HyperTunerResults.SEAL[dataset]['Time_MEAN'] * 4
-        plt.plot(default_x_ticks, auc_SEAL_results, label=f"{dataset} SEAL", color=seal_colors[index], linestyle='-')
+        plt.plot(default_x_ticks, auc_SEAL_results, label=f"SEAL {dataset}", color=seal_colors[index], linestyle='-')
 
         auc_m_results = results['time_m_results']
         for inner_index, m_values in enumerate(auc_m_results):
@@ -102,9 +102,9 @@ if __name__ == '__main__':
                      color=slicedCM[index][inner_index],
                      linestyle=line_style[inner_index], marker=marker_style[inner_index])
 
-    plt.ylabel('Time taken per run in seconds')
-    plt.xlabel('k: Number of walks')
-    plt.legend(loc="upper right")
-    plt.title(f"Non Attributed Datasets Time per run vs. (h, k)")
+    plt.ylabel('Time Per Run (s)')
+    plt.xlabel('k: Number of Walks')
+    plt.legend(loc="center right", ncol=2, fontsize='small')
+    plt.title(f"Non-Attributed Datasets Time Per Run vs. (h, k)")
     plt.show()
     f.savefig("hypertuner_non_attr_time.pdf", bbox_inches='tight')
