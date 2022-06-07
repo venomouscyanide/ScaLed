@@ -47,8 +47,8 @@ def run_n2v(device, data, split_edge, epochs, lr, hidden_channels, neg_ratio, ba
             if epoch % args.eval_steps == 0:
                 clf = train_link_classifier(device, hidden_channels, model, split_edge)
 
-                val_ap, val_auc = get_auc(val_edges, model, clf, val_labels, hidden_channels)
-                test_ap, test_auc = get_auc(test_edges, model, clf, test_labels, hidden_channels)
+                val_ap, val_auc = get_auc(val_edges, model, clf, val_labels.cpu().numpy(), hidden_channels)
+                test_ap, test_auc = get_auc(test_edges, model, clf, test_labels.cpu().numpy(), hidden_channels)
 
                 results = {}
 
@@ -91,7 +91,7 @@ def train_link_classifier(device, hidden_channels, model, split_edge):
         torch.zeros(split_edge['train']['edge'].size(0))
     ], dim=0).to(device)
     link_features = link_examples_to_features(train_edges, model, hidden_channels)
-    clf.fit(link_features, train_labels)
+    clf.fit(link_features, train_labels.cpu().numpy())
     return clf
 
 
