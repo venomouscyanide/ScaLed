@@ -74,9 +74,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     device = f"cuda:{args.cuda_device}" if torch.cuda.is_available() else "cpu"
 
-    permutations = list(itertools.product(
-        HyperTuningSearchSpace.m, HyperTuningSearchSpace.M, HyperTuningSearchSpace.dropedge
-    ))
+    # permutations = list(itertools.product(
+    #     HyperTuningSearchSpace.m, HyperTuningSearchSpace.M, HyperTuningSearchSpace.dropedge
+    # ))
+    permutations = [(5, 20, 0.0), (5, 40, 0.0), (7, 2, 0.0), (7, 5, 0.0), (7, 10, 0.0), (7, 20, 0.0), (7, 40, 0.0)]
 
     total_combinations = len(permutations)
     perms = tqdm(permutations, ncols=140)
