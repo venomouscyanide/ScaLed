@@ -23,12 +23,12 @@ python seal_link_pred.py --dataset USAir --epochs 50 --num_hops 2 --seed 1 --pro
 ###For example usage on attributed datasets, see below:
 
 
-To run ScaLed on USAir with profiling for a seed:
+To run ScaLed on Cora with profiling for a seed:
 ```
 python seal_link_pred.py --dataset Cora --m 3 --M 20 --use_feature --profile --seed 1
  ```
 
-To run SEAL on USAir with profiling for a seed:
+To run SEAL on Cora with profiling for a seed:
 ```
 python seal_link_pred.py --dataset Cora --num_hops 3 --use_feature --profile --seed 1
  ```
