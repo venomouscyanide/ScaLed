@@ -16,7 +16,7 @@ The following are the command line arguments specifically created for ScaLed
 
 - `dataset_stats` - Helps print dataset statistics
 - `m` - Set the length of the random walk taken for ScaLed (called h in the paper)
-- `M` - Set teh number of random walks rooted from the source and destination nodes to take (called k in the paper)
+- `M` - Set the number of random walks rooted from the source and destination nodes to take (called k in the paper)
 - `dropedge` - Set dropedge value to randomly drop edge indices in the forward pass
 - `cuda_device` - Set the GPU ID to be used (eg; 0)
 - `calc_ratio` - Calculate the sparsity of ScaLed vs SEAL
@@ -84,6 +84,9 @@ Since ScaLed is a fork of the original SEAL-OGB repo, all of their experiments w
 
 ## Reporting Issues and Improvements
 We currently don't have an issue/PR template. However, if you find an issue in our code please create an issue in GitHub. It would be great if you could give as much information regarding the issue as possible(what command was run, what are the python package versions, providing full stack trace etc.).  
+
+If you have any further questions, you can reach out to us via email.
+[Paul Louis](mailto:paul.louis@ontariotechu.net), [Shweta Ann Jacob](mailto:shweta.jacob@ontariotechu.net)
 
 
 ## Miscellaneous
