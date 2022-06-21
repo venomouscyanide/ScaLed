@@ -1,1 +1,1 @@
-This data is consumed from the WalkPooling paper GitHub Repo: https://github.com/DaDaCheng/WalkPooling
+This data is consumed from the WalkPooling paper GitHub Repo: https://github.com/DaDaCheng/WalkPooling and the original SEAL GitHub Repo: https://github.com/muhanzhang/SEAL
