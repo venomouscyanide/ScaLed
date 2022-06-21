@@ -101,5 +101,5 @@ We also provide the following miscellaneous codes:
 ## Bibtex
 If you find our work useful, please cite us using the following: 
 ```
-TODO: Insert bibtext here
+TODO: Insert bibtex here
 ```
