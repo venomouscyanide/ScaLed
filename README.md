@@ -2,6 +2,8 @@
 
 ScaLed (Sampling En**c**losing Subgr**a**ph for **L**ink Pr**ed**iction) is a fork of [SEAL](https://github.com/facebookresearch/SEAL_OGB) aimed at training GNNs on sparser k-hop subgraphs on the downstream task of link prediction.
 
+arXiv link: https://arxiv.org/abs/2206.12004
+
 ## Experimental setup
 To setup the development environment, use the `quick_install.sh` bash script. This contains all the essential python packages needed to run the experiments and work on the codebase. **Please note that this dev setup is specifically crafted for Macbooks running the M1 silicon.** If you have any other system, update how Pytorch and Pytorch Geometric gets build in the script (lines 5 and 6).  
 
