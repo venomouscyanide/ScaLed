@@ -101,5 +101,23 @@ We also provide the following miscellaneous codes:
 ## Bibtex
 If you find our work useful, please cite us using the following: 
 ```
-TODO: Insert bibtex here
+@misc{https://doi.org/10.48550/arxiv.2206.12004,
+  doi = {10.48550/ARXIV.2206.12004},
+  
+  url = {https://arxiv.org/abs/2206.12004},
+  
+  author = {Louis, Paul and Jacob, Shweta Ann and Salehi-Abari, Amirali},
+  
+  keywords = {Machine Learning (cs.LG), Social and Information Networks (cs.SI), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  
+  title = {Sampling Enclosing Subgraphs for Link Prediction},
+  
+  publisher = {arXiv},
+  
+  year = {2022},
+  
+  copyright = {arXiv.org perpetual, non-exclusive license}
+}
+
 ```
+You can also find our paper on arXiv at https://arxiv.org/abs/2206.12004
