@@ -4,6 +4,8 @@ ScaLed (Sampling En**c**losing Subgr**a**ph for **L**ink Pr**ed**iction) is a fo
 
 arXiv link: https://arxiv.org/abs/2206.12004
 
+ACM Digital Library Link: https://dl.acm.org/doi/10.1145/3511808.3557688
+
 ## Experimental setup
 To setup the development environment, use the `quick_install.sh` bash script. This contains all the essential python packages needed to run the experiments and work on the codebase. **Please note that this dev setup is specifically crafted for Macbooks running the M1 silicon.** If you have any other system, update how Pytorch and Pytorch Geometric gets build in the script (lines 5 and 6).  
 
@@ -127,4 +129,4 @@ series = {CIKM '22}
 - You can also find our preprint on arXiv at https://arxiv.org/abs/2206.12004
 - You can watch a short video presentation of our work [here](https://drive.google.com/file/d/1PIgmt5Rw-00_utx74zR91hTuOh9RoaRm/view?usp=sharing) presented by [Shweta Ann Jacob](https://shhs29.github.io/). The slides used for the presentation can be found [here](https://drive.google.com/file/d/1Jpwkcw4dq0ctld6dvkQNfwRhe22dY-H9/view?usp=sharing).
 - The poster for this work is available [here](https://drive.google.com/file/d/1hkgEmnyWS6IicrS5EY9C3OQhN_5DzhR3/view?usp=sharing).
-- Finally, the published copy of the paper is available on our [lab's website](https://www.sain.ca/publication/abariPDFS/CIKM22.pdf).
+- Finally, the published copy of the paper is available on [ACM DL](https://dl.acm.org/doi/pdf/10.1145/3511808.3557688).
