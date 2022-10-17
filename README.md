@@ -122,4 +122,9 @@ If you find our work useful, please cite us using the following:
 }
 
 ```
-You can also find our paper on arXiv at https://arxiv.org/abs/2206.12004
+
+## Supplementatry Material Related to the Paper/Research
+- You can also find our preprint on arXiv at https://arxiv.org/abs/2206.12004
+- You can watch a short video presentation of our work [here](https://drive.google.com/file/d/1PIgmt5Rw-00_utx74zR91hTuOh9RoaRm/view?usp=sharing) presented by [Shweta Ann Jacob](https://shhs29.github.io/). The slides used for the presentation can be found [here](https://drive.google.com/file/d/1Jpwkcw4dq0ctld6dvkQNfwRhe22dY-H9/view?usp=sharing).
+- The poster for this work is available [here](https://drive.google.com/file/d/1hkgEmnyWS6IicrS5EY9C3OQhN_5DzhR3/view?usp=sharing).
+- Finally, the published copy of the paper is available on our [lab's website](https://www.sain.ca/publication/abariPDFS/CIKM22.pdf).
