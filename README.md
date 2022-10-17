@@ -1,4 +1,4 @@
-## ScaLed: Sampling En**c**losing Subgr**a**ph for **L**ink Pr**ed**iction
+# ScaLed: Sampling En**c**losing Subgr**a**ph for **L**ink Pr**ed**iction
 
 ScaLed (Sampling En**c**losing Subgr**a**ph for **L**ink Pr**ed**iction) is a fork of [SEAL](https://github.com/facebookresearch/SEAL_OGB) aimed at training GNNs on sparser k-hop subgraphs on the downstream task of link prediction.
 
