@@ -6,6 +6,9 @@ arXiv link: https://arxiv.org/abs/2206.12004
 
 ACM Digital Library Link: https://dl.acm.org/doi/10.1145/3511808.3557688
 
+<img src="https://user-images.githubusercontent.com/14086603/211739304-ccbf5cd2-861a-4c5f-be86-0efdc1047eb9.png" width="700" height="650">
+
+
 ## Experimental setup
 To setup the development environment, use the `quick_install.sh` bash script. This contains all the essential python packages needed to run the experiments and work on the codebase. **Please note that this dev setup is specifically crafted for Macbooks running the M1 silicon.** If you have any other system, update how Pytorch and Pytorch Geometric gets build in the script (lines 5 and 6).  
 
